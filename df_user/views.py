@@ -1,5 +1,7 @@
 #coding=utf-8
 from hashlib import sha1
+
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from df_user.models import *
 
@@ -25,7 +27,41 @@ def register_handle(request):
     return redirect('/user/login/')
 
 def login(request):
-    return render(request, 'df_user/login.html')
+    uname=request.COOKIES.get('uname','')
+    context={'title':'用户登录','error_name':0,'error_pwd':0,'uname':uname}
+    return render(request, 'df_user/login.html',context)
+
+def login_handle(request):
+    post=request.POST
+    uname=post.get('username')
+    upwd=post.get('pwd')
+    rember=post.get('rember',0)
+    users=UserInfo.objects.filter(uname=uname)
+    #判断用户名
+    if len(users)==1:
+        s1=sha1()
+        s1.update(upwd)
+        if s1.hexdigest()==users[0].upassword:
+            red = HttpResponseRedirect('/user/info')
+            #判断是否记住用户名
+            if rember!=0:
+                red.set_cookie('uname',uname)
+            else:
+                red.set_cookie('uname','',max_age=-1)
+            request.session['userid']=users[0].id
+            request.session['username']=uname
+            return red
+        else:
+            context={'title':'用户登录','error_name': 0,'error_pwd': 1,'uname':uname,'pwd':upwd}
+            return render(request,'df_user/login.html',context)
+    else:
+        context={'title':'用户登录','error_name': 1,'error_pwd': 0,'uname':uname,'pwd':upwd}
+        return render(request,'df_user/login.html',context)
+
+def register_exist(requset):
+    uname = requset.GET.get('uname')
+    count = UserInfo.objects.filter(uname=uname).count()
+    return JsonResponse({'count':count})
 
 
 
