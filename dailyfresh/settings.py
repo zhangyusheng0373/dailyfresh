@@ -1,3 +1,4 @@
+#coding=utf-8
 """
 Django settings for dailyfresh project.
 
@@ -9,7 +10,6 @@ https://docs.djangoproject.com/en/1.8/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
 """
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
@@ -38,6 +38,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'df_user',
+    'df_goods',
+    'tinymce',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -109,3 +111,12 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
 TEMPLATE_DIRS = (os.path.join(BASE_DIR,  'templates'),)
+MEDIA_ROOT=os.path.join(BASE_DIR,'static')
+#MEDIA_ROOT='/var/www/daily/static' ng目录，上线时部署
+
+#admin富文本编辑器配置
+TINYMCE_DEFAULT_CONFIG = {
+    'theme': 'advanced',
+    'width': 600,
+    'height': 400,
+}
