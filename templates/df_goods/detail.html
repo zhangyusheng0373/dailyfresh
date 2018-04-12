@@ -1,47 +1,134 @@
-{% extends 'market/base_detail_list.html' %}
-{% load static from staticfiles %}
-{% block title %}天天生鲜-商品详情{% endblock title %}
+{%extends 'goods_base.html'%}
+{% block head%}
+    <script type="text/javascript">
 
-{% block main_content %}
+		$(function () {
+		    var $add_x = $('#add_cart').offset().top;
+            var $add_y = $('#add_cart').offset().left;
+            var $to_x = $('#show_count').offset().top;
+            var $to_y = $('#show_count').offset().left;
+            $(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
+            //添加购物车
+            $('#add_cart').click(function(){
+                //判断是否登录，若未登录则提示先登录
+                if($('.login_btn').text().indexOf('登录')>=0){
+                    alert('请登录后再购买');
+                    location.href='/user/login/';
+                    return;
+                }
+                //动画
+                $(".add_jump").stop().animate({
+                    'left': $to_y+7,
+                    'top': $to_x+7},
+                    "fast", function() {
+                        $(".add_jump").fadeOut('fast',function () {});
+                });
+                //异步
+                num=parseInt($('.num_show').val());
+                $.get('/cart/add{{g.id}}_'+num+'/',function (data){
+                    $('#show_count').text(data.count);
+                });
+            });
+        })
+    </script>
+    <script type="text/javascript">
+		function add() {
+	    num=parseFloat($('.num_show').val());
+	    $('.num_show').val(num+1);
+	    $('.num_show').blur();
+    }
+    function minus() {
+	    num=parseFloat($('.num_show').val());
+	    if(num<=1){
+	    	return;
+	    }
+	    $('.num_show').val(num-1);
+	    $('.num_show').blur();
+    }
+
+	$(function () {
+		$('.num_show').blur(function () {
+		    num=parseInt($('.num_show').val());
+		    if(num<=1){
+		    	num=1;
+		    }
+		    price=parseFloat($('#gprice').text());
+		    total=num*price;
+		    $('.num_show').val(num);
+		    $('#gtotal').text(total.toFixed(2)+'元');
+        });
+     //立即购买
+		$('#buy_btn').click(function () {
+			//判断是否登录，若未登录则提示先登录
+			if($('.login_btn').text().indexOf('登录')>=0){
+			    alert('请先登录后再购买');
+			    location.href='/user/login/';
+				return;
+			}
+			//添加到购物车
+			num=parseInt($('.num_show').val());
+			$.get('/cart/add{{g.id}}_'+num+'/',function (data) {
+			    //转向订单页面
+				location.href='/order/?cart_id='+data.cart_id;
+            });
+        });
+    });
+	</script>
+{% endblock head %}
+{%block body1%}
+<div class="navbar_con">
+		<div class="navbar clearfix">
+			<div class="subnav_con fl">
+				<h1>全部商品分类</h1>
+				<span></span>
+				<ul class="subnav">
+					<li><a href="/list1_1_1/" class="fruit">新鲜水果</a></li>
+					<li><a href="/list2_1_1/" class="seafood">海鲜水产</a></li>
+					<li><a href="/list3_1_1/" class="meet">猪牛羊肉</a></li>
+					<li><a href="/list4_1_1/" class="egg">禽类蛋品</a></li>
+					<li><a href="/list5_1_1/" class="vegetables">新鲜蔬菜</a></li>
+					<li><a href="/list6_1_1/" class="ice">速冻食品</a></li>
+				</ul>
+			</div>
+			<ul class="navlist fl">
+				<li><a href="/">首页</a></li>
+				<li class="interval">|</li>
+				<li><a href="">手机生鲜</a></li>
+				<li class="interval">|</li>
+				<li><a href="">抽奖</a></li>
+			</ul>
+		</div>
+	</div>
+
 	<div class="breadcrumb">
-		<a href="#">全部分类</a>
-		<span>></span>
-		<a href="#">{{ sku.type.name }}</a>
-		<span>></span>
-		<a href="#">商品详情</a>
+		&nbsp;&nbsp;全部分类&nbsp;>&nbsp;{{ttitle}}
+        {%if id|default:'' != ''%}
+        &nbsp;>&nbsp;商品详情
+        {%endif%}
 	</div>
 
 	<div class="goods_detail_con clearfix">
-		<div class="goods_detail_pic fl"><img src="{{ sku.image.url }}"></div>
+		<div class="goods_detail_pic fl"><img src="/static/{{g.gpic}}"></div>
 
 		<div class="goods_detail_list fr">
-			<h3>{{ sku.name }}</h3>
-			<p>{{ sku.desc }}</p>
+			<h3>{{g.gtitle}}</h3>
+			<p>{{g.gjianjie}}</p>
 			<div class="prize_bar">
-				<span class="show_pirze">¥<em>{{ sku.price }}</em></span>
-				<span class="show_unit">单  位：{{ sku.unite }}</span>
+				<span class="show_pirze">¥<em id='gprice'>{{g.gprice}}</em></span>
+				<span class="show_unit">单  位：{{g.gunit}}</span>
 			</div>
 			<div class="goods_num clearfix">
 				<div class="num_name fl">数 量：</div>
 				<div class="num_add fl">
 					<input type="text" class="num_show fl" value="1">
-					<a href="javascript:;" class="add fr">+</a>
-					<a href="javascript:;" class="minus fr">-</a>	
-				</div> 
+					<a href="javascript:add();" class="add fr">+</a>
+					<a href="javascript:minus();" class="minus fr">-</a>
+				</div>
 			</div>
-            <div>
-                <div>其他规格：</div>
-                <div>
-                    {% for sku in same_spu_skus %}
-                        <a href="{% url 'goods:detail' sku.id %}">{{ sku.name }}</a>
-                    {% endfor %}
-                </div>
-            </div>
-			<div class="total">总价：<em>{{ sku.price }}元</em></div>
+			<div class="total">总价：<em id='gtotal'>{{g.gprice}}元</em></div>
 			<div class="operate_btn">
-                {% csrf_token %}
-				<a href="javascript:;" class="buy_btn">立即购买</a>
-				<a href="javascript:;" sku_id="{{ sku.id }}" class="add_cart" id="add_cart">加入购物车</a>
+				<a href="javascript:;" class="buy_btn"  id="buy_btn">立即购买</a>
+				<a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>
 			</div>
 		</div>
 	</div>
@@ -51,13 +138,13 @@
 			<div class="new_goods">
 				<h3>新品推荐</h3>
 				<ul>
-                    {% for sku in new_skus %}
+				{%for g in news%}
 					<li>
-						<a href="{% url 'goods:detail' sku.id %}"><img src="{{ sku.image.url }}"></a>
-						<h4><a href="{% url 'goods:detail' sku.id %}">{{ sku.name }}</a></h4>
-						<div class="prize">￥{{ sku.price }}</div>
+						<a href="#"><img src="/static/{{g.gpic}}"></a>
+						<h4><a href="#">{{g.gtitle}}</a></h4>
+						<div class="prize">￥{{g.gprice}}</div>
 					</li>
-					{% endfor %}
+					{%endfor%}
 				</ul>
 			</div>
 		</div>
@@ -68,144 +155,14 @@
 				<li>评论</li>
 			</ul>
 
-            {# 显示商品的详情信息 #}
 			<div class="tab_content">
-				<dl>
-					<dt>商品详情：</dt>
-					<dd>{{ sku.goods.detail|safe }}</dd>
-                </dl>
-			</div>
-
-            {# 显示商品的评论信息 #}
-			<div class="tab_content" style="display: none;">
-				<dl>
-                    {% for order_sku in order_skus %}
-					<dt>评论时间：{{ order_sku.update_time }}&nbsp;&nbsp;用户：{{ order_sku.order.user.username }}</dt>
-					<dd>评论内容：{{ order_sku.comment }}</dd>
-                    {% empty %}
-                        暂无评论信息
-                    {% endfor %}
-                </dl>
+				{{g.gcontent|safe}}
 			</div>
 
 		</div>
 	</div>
-{% endblock main_content %}
 
-{% block bottom %}
+
 	<div class="add_jump"></div>
-{% endblock bottom %}
 
-{% block bottomfiles %}
-	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
-	<script type="text/javascript">
-        // 计算商品的总价格
-        function update_sku_amount() {
-            // 获取商品的数量和单价
-            var count = $('.num_show').val()
-            var price = $('.show_pirze').children('em').text()
-
-            // 计算总价
-            var amount = parseInt(count)*parseFloat(price)
-
-            // 设置总价
-            $('.total').children('em').text(amount.toFixed(2)+'元')
-
-        }
-
-        // 商品数目的增加
-        $('.add').click(function () {
-            // 获取商品的数量
-            var count = $('.num_show').val()
-
-            // 加1
-            count = parseInt(count)+1
-
-            // 重新设置
-            $('.num_show').val(count)
-
-            // 更新商品总价
-            update_sku_amount()
-            
-        })
-
-        // 商品数目的减少
-        $('.minus').click(function () {
-            // 获取商品的数量
-            var count = $('.num_show').val()
-
-            // 加1
-            count = parseInt(count)-1
-            if (count <= 0){
-                count = 1
-            }
-
-            // 重新设置
-            $('.num_show').val(count)
-
-            // 更新商品总价
-            update_sku_amount()
-
-        })
-
-        // 手动输入商品的数量
-        $('.num_show').blur(function () {
-            // 获取用户输入数目
-            var count = $(this).val()
-
-            // 校验count
-            if (isNaN(count) || count.trim().length==0 || parseInt(count)<=0){
-                count = 1
-            }
-
-            // 重新设置
-            $('.num_show').val(parseInt(count))
-
-            // 更新商品总价
-            update_sku_amount()
-        })
-
-        // 获取add_cart a标签左上角的坐标
-		var $add_x = $('#add_cart').offset().top;
-		var $add_y = $('#add_cart').offset().left;
-
-        // 获取show_count div元素左上角的坐标
-		var $to_x = $('#show_count').offset().top;
-		var $to_y = $('#show_count').offset().left;
-
-		$('#add_cart').click(function(){
-            // 获取商品的id和商品的数量
-            var count = $('.num_show').val()
-            var sku_id = $(this).attr('sku_id') // prop(属性名): 获取html标签原有的属性
-            // 获取csrf隐藏域的值
-            var csrf = $('input[name="csrfmiddlewaretoken"]').val()
-
-            // 组织参数
-            var params = {'sku_id': sku_id, 'count': count, 'csrfmiddlewaretoken': csrf}
-
-            // 发起ajax post请求，访问/cart/add，传递参数：商品id(sku_id) 商品数量(count)
-            $.post('/cart/add', params, function (data) {
-                if (data.res == 5){
-                    // 添加成功
-                    // alert('添加成功')
-                    // 设置add_jump div元素的样式
-                    $(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
-                    $(".add_jump").stop().animate({
-                        'left': $to_y+7,
-                        'top': $to_x+7},
-                        "fast", function() {
-                            $(".add_jump").fadeOut('fast',function(){
-                                // 设置页面上购物车中商品的条目数
-                                $('#show_count').html(data.cart_count);
-                            });
-
-                    });
-                }
-                else {
-                    // 添加失败
-                    alert(data.errmsg)
-                }
-            })
-		})
-	</script>
-{% endblock bottomfiles %}
+{%endblock body1%}
