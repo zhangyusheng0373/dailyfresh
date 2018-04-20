@@ -1,0 +1,4 @@
+1、Python环境：Python2
+2、框架：django
+3、数据库：mysql
+4、IDE工具：pycharm
